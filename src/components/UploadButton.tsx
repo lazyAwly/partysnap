@@ -1,8 +1,14 @@
 'use client'
 import { useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { compressImage } from '@/lib/compress'
 
 const MAX_SIZE = 10 * 1024 * 1024
+
+type UploadState =
+  | { status: 'idle' }
+  | { status: 'uploading'; total: number; done: number; failed: number }
+  | { status: 'done'; total: number; failed: number }
 
 export function UploadButton({
   eventId,
@@ -12,45 +18,69 @@ export function UploadButton({
   guestName: string
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
-  const [uploading, setUploading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [state, setState] = useState<UploadState>({ status: 'idle' })
 
   async function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files ?? [])
+    if (!files.length) return
 
-    if (file.size > MAX_SIZE) {
-      setError('Photo must be under 10MB')
+    const valid = files.filter((f) => f.size <= MAX_SIZE)
+    const skipped = files.length - valid.length
+
+    if (!valid.length) {
+      setState({ status: 'done', total: 0, failed: skipped })
       if (inputRef.current) inputRef.current.value = ''
+      setTimeout(() => setState({ status: 'idle' }), 3000)
       return
     }
 
-    setUploading(true)
-    setError(null)
+    let done = 0
+    let failed = skipped
 
-    try {
-      const id = crypto.randomUUID()
-      const filePath = `${eventId}/${id}`
-      const supabase = createClient()
+    setState({ status: 'uploading', total: valid.length, done, failed })
 
-      const { error: storageError } = await supabase.storage
-        .from('photos')
-        .upload(filePath, file)
+    for (const file of valid) {
+      try {
+        const compressed = await compressImage(file)
+        const id = crypto.randomUUID()
+        const filePath = `${eventId}/${id}`
+        const supabase = createClient()
 
-      if (storageError) throw storageError
+        const { error: storageError } = await supabase.storage
+          .from('photos')
+          .upload(filePath, compressed)
+        if (storageError) throw storageError
 
-      const { error: dbError } = await supabase
-        .from('uploads')
-        .insert({ id, event_id: eventId, guest_name: guestName, file_path: filePath })
+        const { error: dbError } = await supabase
+          .from('uploads')
+          .insert({ id, event_id: eventId, guest_name: guestName, file_path: filePath })
+        if (dbError) throw dbError
 
-      if (dbError) throw dbError
-    } catch {
-      setError('Upload failed. Please try again.')
-    } finally {
-      setUploading(false)
-      if (inputRef.current) inputRef.current.value = ''
+        done++
+      } catch {
+        failed++
+      }
+      setState({ status: 'uploading', total: valid.length, done, failed })
     }
+
+    setState({ status: 'done', total: valid.length, failed })
+    if (inputRef.current) inputRef.current.value = ''
+    setTimeout(() => setState({ status: 'idle' }), 3000)
   }
+
+  const label =
+    state.status === 'idle'
+      ? '📷 Upload Photos'
+      : state.status === 'uploading'
+      ? `Uploading ${state.done + 1} of ${state.total}…`
+      : state.failed > 0
+      ? `${state.total - state.failed} uploaded · ${state.failed} failed`
+      : `${state.total} photo${state.total !== 1 ? 's' : ''} uploaded ✓`
+
+  const progress =
+    state.status === 'uploading' && state.total > 0
+      ? state.done / state.total
+      : null
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -58,18 +88,24 @@ export function UploadButton({
         ref={inputRef}
         type="file"
         accept="image/*"
+        multiple
         onChange={handleChange}
         className="hidden"
       />
       <button
         onClick={() => inputRef.current?.click()}
-        disabled={uploading}
-        className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold rounded-xl transition text-lg"
+        disabled={state.status === 'uploading'}
+        className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-800 text-white font-bold rounded-2xl shadow-2xl transition text-base min-w-[220px] text-center"
       >
-        {uploading ? 'Uploading…' : '📷 Upload Photo'}
+        {label}
       </button>
-      {error && (
-        <p className="text-red-400 text-sm">{error}</p>
+      {progress !== null && (
+        <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-indigo-400 transition-all duration-300"
+            style={{ width: `${progress * 100}%` }}
+          />
+        </div>
       )}
     </div>
   )
