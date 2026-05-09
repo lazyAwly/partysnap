@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/auth'
 import { createServiceClient } from '@/lib/supabase/service'
 import { toggleEventActive } from '../../actions'
 import { QRCode } from '@/components/QRCode'
+import { ShareLinkButton } from '@/components/ShareLinkButton'
 import { AdminPhotoGrid } from '@/components/AdminPhotoGrid'
 import type { Upload } from '@/lib/supabase/types'
 
@@ -58,9 +59,10 @@ export default async function AdminEventPage({
         </form>
       </div>
 
-      <div className="bg-gray-900 rounded-2xl p-6 mb-6 flex flex-col items-center">
-        <p className="text-sm text-gray-400 mb-4">Print this QR code and put it at the party</p>
+      <div className="bg-gray-900 rounded-2xl p-6 mb-6 flex flex-col items-center gap-4">
+        <p className="text-sm text-gray-400">Print this QR code and put it at the party</p>
         <QRCode url={eventUrl} />
+        <ShareLinkButton url={eventUrl} />
       </div>
 
       <div className="bg-gray-900 rounded-2xl p-6">
