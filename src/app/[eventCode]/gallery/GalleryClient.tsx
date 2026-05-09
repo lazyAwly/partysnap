@@ -29,6 +29,18 @@ export function GalleryClient({
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [hasMore, setHasMore] = useState(initialHasMore)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [deleting, setDeleting] = useState<string | null>(null)
+
+  async function deleteMyPhoto(photoId: string) {
+    setDeleting(photoId)
+    const photo = photos.find((p) => p.id === photoId)
+    if (!photo) { setDeleting(null); return }
+    await fetch(`/api/events/${eventId}/photos/${photoId}`, {
+      method: 'DELETE',
+      headers: { 'x-guest-name': guestName },
+    })
+    setDeleting(null)
+  }
 
   useEffect(() => {
     const supabase = createClient()
@@ -128,8 +140,17 @@ export function GalleryClient({
               className="w-full h-full object-cover rounded-2xl cursor-pointer"
               onClick={() => setLightboxIndex(0)}
             />
-            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-3 rounded-b-2xl">
+            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-3 rounded-b-2xl flex items-end justify-between">
               <p className="text-white text-sm truncate">{hero.guest_name}</p>
+              {hero.guest_name === guestName && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); deleteMyPhoto(hero.id) }}
+                  disabled={deleting === hero.id}
+                  className="text-xs text-red-400 hover:text-red-300 disabled:opacity-50 ml-2 shrink-0"
+                >
+                  {deleting === hero.id ? '…' : 'Delete'}
+                </button>
+              )}
             </div>
           </div>
 
@@ -145,8 +166,17 @@ export function GalleryClient({
                     className="w-full h-full object-cover rounded-xl cursor-pointer"
                     onClick={() => setLightboxIndex(i + 1)}
                   />
-                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-2 rounded-b-xl opacity-0 hover:opacity-100 transition">
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-2 rounded-b-xl opacity-0 hover:opacity-100 transition flex items-end justify-between">
                     <p className="text-white text-xs truncate">{photo.guest_name}</p>
+                    {photo.guest_name === guestName && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteMyPhoto(photo.id) }}
+                        disabled={deleting === photo.id}
+                        className="text-xs text-red-400 hover:text-red-300 disabled:opacity-50 ml-1 shrink-0"
+                      >
+                        {deleting === photo.id ? '…' : 'Delete'}
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
