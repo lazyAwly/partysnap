@@ -18,6 +18,10 @@ export function AdminPhotoGrid({
   const [photos, setPhotos] = useState(initialPhotos)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [downloading, setDownloading] = useState(false)
+  const [selectedGuest, setSelectedGuest] = useState<string | null>(null)
+
+  const guests = Array.from(new Set(photos.map((p) => p.guest_name))).sort()
+  const filtered = selectedGuest ? photos.filter((p) => p.guest_name === selectedGuest) : photos
 
   async function deletePhoto(uploadId: string) {
     setDeleting(uploadId)
@@ -26,6 +30,12 @@ export function AdminPhotoGrid({
     })
     if (res.ok) {
       setPhotos((prev) => prev.filter((p) => p.id !== uploadId))
+      // if deleted last photo from selected guest, reset filter
+      setSelectedGuest((g) => {
+        if (!g) return null
+        const remaining = photos.filter((p) => p.id !== uploadId && p.guest_name === g)
+        return remaining.length > 0 ? g : null
+      })
     }
     setDeleting(null)
   }
@@ -35,7 +45,7 @@ export function AdminPhotoGrid({
     const { default: JSZip } = await import('jszip')
     const zip = new JSZip()
     await Promise.all(
-      photos.map(async (photo) => {
+      filtered.map(async (photo) => {
         const res = await fetch(photo.publicUrl)
         const blob = await res.blob()
         const ext = blob.type.split('/')[1] || 'jpg'
@@ -46,7 +56,7 @@ export function AdminPhotoGrid({
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'party-photos.zip'
+    a.download = selectedGuest ? `${selectedGuest}-photos.zip` : 'party-photos.zip'
     a.click()
     URL.revokeObjectURL(url)
     setDownloading(false)
@@ -55,24 +65,53 @@ export function AdminPhotoGrid({
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <p className="text-gray-400">{photos.length} photos</p>
-        {photos.length > 0 && (
+        <p className="text-gray-400">{filtered.length} photo{filtered.length !== 1 ? 's' : ''}{selectedGuest ? ` by ${selectedGuest}` : ''}</p>
+        {filtered.length > 0 && (
           <button
             onClick={downloadAll}
             disabled={downloading}
             className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition"
           >
-            {downloading ? 'Zipping…' : `⬇ Download All`}
+            {downloading ? 'Zipping…' : '⬇ Download All'}
           </button>
         )}
       </div>
 
-      {photos.length === 0 && (
+      {/* Guest filter chips */}
+      {guests.length > 1 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          <button
+            onClick={() => setSelectedGuest(null)}
+            className={`px-3 py-1 rounded-full text-sm transition ${
+              selectedGuest === null
+                ? 'bg-indigo-600 text-white'
+                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            }`}
+          >
+            All
+          </button>
+          {guests.map((name) => (
+            <button
+              key={name}
+              onClick={() => setSelectedGuest(selectedGuest === name ? null : name)}
+              className={`px-3 py-1 rounded-full text-sm transition ${
+                selectedGuest === name
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+              }`}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {filtered.length === 0 && (
         <p className="text-gray-500 text-center py-12">No photos yet.</p>
       )}
 
       <div className="grid grid-cols-3 gap-2">
-        {photos.map((photo) => (
+        {filtered.map((photo) => (
           <div key={photo.id} className="relative group aspect-square">
             <img
               src={photo.publicUrl}
