@@ -22,6 +22,7 @@ export function PhotoLightbox({
 }) {
   const photo = photos[index]
   const touchStartX = useRef<number>(0)
+  const touchStartY = useRef<number>(0)
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -40,12 +41,18 @@ export function PhotoLightbox({
 
   function onTouchStart(e: React.TouchEvent) {
     touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
   }
 
   function onTouchEnd(e: React.TouchEvent) {
-    const delta = touchStartX.current - e.changedTouches[0].clientX
-    if (delta > 50) onNext()
-    else if (delta < -50) onPrev()
+    const deltaX = touchStartX.current - e.changedTouches[0].clientX
+    const deltaY = touchStartY.current - e.changedTouches[0].clientY
+    if (deltaY < -80 && Math.abs(deltaY) > Math.abs(deltaX)) {
+      onClose()
+    } else if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      if (deltaX > 50) onNext()
+      else if (deltaX < -50) onPrev()
+    }
   }
 
   return (
