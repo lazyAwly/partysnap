@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { UploadButton } from '@/components/UploadButton'
 import { PhotoLightbox } from './PhotoLightbox'
 import { OnboardingSheet } from './OnboardingSheet'
+import { thumbnailUrl } from '@/lib/thumbnail'
 import type { Upload } from '@/lib/supabase/types'
 
 type Photo = Upload & { publicUrl: string }
@@ -134,7 +135,7 @@ export function GalleryClient({
           {/* Hero: newest photo, full width */}
           <div className="relative w-full" style={{ aspectRatio: '4/3' }}>
             <img
-              src={hero.publicUrl}
+              src={thumbnailUrl(hero.publicUrl, 1200)}
               alt={hero.guest_name}
               loading="lazy"
               className="w-full h-full object-cover rounded-2xl cursor-pointer"
@@ -160,7 +161,7 @@ export function GalleryClient({
               {rest.map((photo, i) => (
                 <div key={photo.id} className="relative aspect-square">
                   <img
-                    src={photo.publicUrl}
+                    src={thumbnailUrl(photo.publicUrl, 400)}
                     alt={photo.guest_name}
                     loading="lazy"
                     className="w-full h-full object-cover rounded-xl cursor-pointer"
