@@ -19,6 +19,16 @@ export default async function GalleryPage({
 
   if (!event) notFound()
 
+  if (!event.active) {
+    return (
+      <main className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center gap-4 px-4">
+        <div className="text-5xl">🎉</div>
+        <h1 className="text-2xl font-bold">{event.name}</h1>
+        <p className="text-gray-400 text-center">This event has ended. Thanks for being part of it!</p>
+      </main>
+    )
+  }
+
   const { data: uploads } = await supabase
     .from('uploads')
     .select('*')
