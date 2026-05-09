@@ -1,5 +1,6 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 type Photo = {
   id: string
@@ -19,6 +20,30 @@ export function AdminPhotoGrid({
   const [deleting, setDeleting] = useState<string | null>(null)
   const [downloading, setDownloading] = useState(false)
   const [selectedGuest, setSelectedGuest] = useState<string | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    const channel = supabase
+      .channel(`admin-uploads:${eventId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'uploads', filter: `event_id=eq.${eventId}` },
+        (payload) => {
+          const u = payload.new as { id: string; event_id: string; guest_name: string; file_path: string }
+          const { data } = supabase.storage.from('photos').getPublicUrl(u.file_path)
+          setPhotos((prev) => [{ id: u.id, event_id: u.event_id, guest_name: u.guest_name, publicUrl: data.publicUrl }, ...prev])
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'uploads', filter: `event_id=eq.${eventId}` },
+        (payload) => {
+          setPhotos((prev) => prev.filter((p) => p.id !== (payload.old as { id: string }).id))
+        }
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [eventId])
 
   const guests = Array.from(new Set(photos.map((p) => p.guest_name))).sort()
   const filtered = selectedGuest ? photos.filter((p) => p.guest_name === selectedGuest) : photos
