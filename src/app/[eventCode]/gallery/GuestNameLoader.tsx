@@ -11,11 +11,13 @@ export function GuestNameLoader({
   eventId,
   eventName,
   initialPhotos,
+  hasMore,
 }: {
   eventCode: string
   eventId: string
   eventName: string
   initialPhotos: Photo[]
+  hasMore: boolean
 }) {
   const [guestName, setGuestName] = useState<string | null>(null)
   const router = useRouter()
@@ -38,6 +40,7 @@ export function GuestNameLoader({
       eventCode={eventCode}
       initialPhotos={initialPhotos}
       guestName={guestName}
+      hasMore={hasMore}
     />
   )
 }

@@ -29,16 +29,21 @@ export default async function GalleryPage({
     )
   }
 
+  const PAGE_SIZE = 50
+
   const { data: uploads } = await supabase
     .from('uploads')
     .select('*')
     .eq('event_id', event.id)
     .order('created_at', { ascending: false })
+    .limit(PAGE_SIZE)
 
   const initialPhotos = (uploads ?? []).map((u: Upload) => ({
     ...u,
     publicUrl: supabase.storage.from('photos').getPublicUrl(u.file_path).data.publicUrl,
   }))
+
+  const hasMore = (uploads ?? []).length === PAGE_SIZE
 
   return (
     <GuestNameLoader
@@ -46,6 +51,7 @@ export default async function GalleryPage({
       eventId={event.id}
       eventName={event.name}
       initialPhotos={initialPhotos}
+      hasMore={hasMore}
     />
   )
 }

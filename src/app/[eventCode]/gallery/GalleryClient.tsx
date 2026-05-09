@@ -8,21 +8,27 @@ import type { Upload } from '@/lib/supabase/types'
 
 type Photo = Upload & { publicUrl: string }
 
+const PAGE_SIZE = 50
+
 export function GalleryClient({
   eventId,
   eventName,
   eventCode,
   initialPhotos,
   guestName,
+  hasMore: initialHasMore,
 }: {
   eventId: string
   eventName: string
   eventCode: string
   initialPhotos: Photo[]
   guestName: string
+  hasMore: boolean
 }) {
   const [photos, setPhotos] = useState<Photo[]>(initialPhotos)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+  const [hasMore, setHasMore] = useState(initialHasMore)
+  const [loadingMore, setLoadingMore] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -66,6 +72,31 @@ export function GalleryClient({
       supabase.removeChannel(channel)
     }
   }, [eventId])
+
+  async function loadMore() {
+    const oldest = photos[photos.length - 1]
+    if (!oldest || loadingMore) return
+
+    setLoadingMore(true)
+    const supabase = createClient()
+
+    const { data: uploads } = await supabase
+      .from('uploads')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: false })
+      .lt('created_at', oldest.created_at)
+      .limit(PAGE_SIZE)
+
+    const newPhotos = (uploads ?? []).map((u: Upload) => ({
+      ...u,
+      publicUrl: supabase.storage.from('photos').getPublicUrl(u.file_path).data.publicUrl,
+    }))
+
+    setPhotos((prev) => [...prev, ...newPhotos])
+    setHasMore(newPhotos.length === PAGE_SIZE)
+    setLoadingMore(false)
+  }
 
   const uploaderCount = new Set(photos.map((p) => p.guest_name)).size
 
@@ -119,6 +150,19 @@ export function GalleryClient({
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Load more */}
+          {hasMore && (
+            <div className="flex justify-center py-4">
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="px-6 py-2.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-gray-300 rounded-xl text-sm transition"
+              >
+                {loadingMore ? 'Loading…' : 'Load more photos'}
+              </button>
             </div>
           )}
         </div>
