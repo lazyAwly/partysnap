@@ -13,13 +13,23 @@ export async function compressImage(
   maxWidth = 1920,
   quality = 0.8
 ): Promise<File> {
-  const bitmap = await createImageBitmap(file)
+  let bitmap: ImageBitmap
+  try {
+    bitmap = await createImageBitmap(file)
+  } catch {
+    return file
+  }
+
   const { w, h } = calculateScale(bitmap.width, bitmap.height, maxWidth)
 
   const canvas = document.createElement('canvas')
   canvas.width = w
   canvas.height = h
-  const ctx = canvas.getContext('2d')!
+  const ctx = canvas.getContext('2d')
+  if (!ctx) {
+    bitmap.close()
+    return file
+  }
   ctx.drawImage(bitmap, 0, 0, w, h)
   bitmap.close()
 
