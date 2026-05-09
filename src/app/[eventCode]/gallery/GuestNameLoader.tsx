@@ -35,6 +35,7 @@ export function GuestNameLoader({
     <GalleryClient
       eventId={eventId}
       eventName={eventName}
+      eventCode={eventCode}
       initialPhotos={initialPhotos}
       guestName={guestName}
     />
