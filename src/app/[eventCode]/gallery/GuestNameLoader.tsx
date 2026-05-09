@@ -1,13 +1,21 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { GalleryClient } from './GalleryClient'
+import type { Upload } from '@/lib/supabase/types'
+
+type Photo = Upload & { publicUrl: string }
 
 export function GuestNameLoader({
   eventCode,
-  children,
+  eventId,
+  eventName,
+  initialPhotos,
 }: {
   eventCode: string
-  children: (guestName: string) => React.ReactNode
+  eventId: string
+  eventName: string
+  initialPhotos: Photo[]
 }) {
   const [guestName, setGuestName] = useState<string | null>(null)
   const router = useRouter()
@@ -23,5 +31,12 @@ export function GuestNameLoader({
 
   if (!guestName) return null
 
-  return <>{children(guestName)}</>
+  return (
+    <GalleryClient
+      eventId={eventId}
+      eventName={eventName}
+      initialPhotos={initialPhotos}
+      guestName={guestName}
+    />
+  )
 }

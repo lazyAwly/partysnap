@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { GalleryClient } from './GalleryClient'
 import { GuestNameLoader } from './GuestNameLoader'
 import type { Upload } from '@/lib/supabase/types'
 
@@ -32,15 +31,11 @@ export default async function GalleryPage({
   }))
 
   return (
-    <GuestNameLoader eventCode={eventCode}>
-      {(guestName) => (
-        <GalleryClient
-          eventId={event.id}
-          eventName={event.name}
-          initialPhotos={initialPhotos}
-          guestName={guestName}
-        />
-      )}
-    </GuestNameLoader>
+    <GuestNameLoader
+      eventCode={eventCode}
+      eventId={event.id}
+      eventName={event.name}
+      initialPhotos={initialPhotos}
+    />
   )
 }
