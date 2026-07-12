@@ -10,7 +10,8 @@ export async function createEvent(formData: FormData) {
   if (!name) return
   const code = slugify(name)
   const supabase = createServiceClient()
-  await supabase.from('events').insert({ name, code })
+  const { error } = await supabase.from('events').insert({ name, code })
+  if (error) throw new Error(`Failed to create event: ${error.message}`)
   revalidatePath('/admin')
 }
 

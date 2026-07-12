@@ -11,7 +11,7 @@ export default async function AdminPage() {
   await requireAdmin()
 
   const supabase = createServiceClient()
-  const { data: events } = await supabase
+  const { data: events, error } = await supabase
     .from('events')
     .select('*, uploads(count)')
     .order('created_at', { ascending: false })
@@ -48,6 +48,12 @@ export default async function AdminPage() {
         </button>
       </form>
 
+      {error && (
+        <p className="text-red-400 bg-red-950/50 border border-red-900 rounded-lg px-4 py-3 mb-6">
+          Failed to load events: {error.message}
+        </p>
+      )}
+
       <div className="flex flex-col gap-3">
         {(events as EventWithCount[] | null)?.map((event) => (
           <Link
@@ -66,7 +72,7 @@ export default async function AdminPage() {
             </span>
           </Link>
         ))}
-        {(!events || events.length === 0) && (
+        {!error && (!events || events.length === 0) && (
           <p className="text-gray-500 text-center py-8">No events yet. Create one above.</p>
         )}
       </div>
