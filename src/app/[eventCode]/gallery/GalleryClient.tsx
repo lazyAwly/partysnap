@@ -140,6 +140,9 @@ export function GalleryClient({
               loading="lazy"
               className="w-full h-full object-cover rounded-2xl cursor-pointer"
               onClick={() => setLightboxIndex(0)}
+              onError={(e) => {
+                if (e.currentTarget.src !== hero.publicUrl) e.currentTarget.src = hero.publicUrl
+              }}
             />
             <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-3 rounded-b-2xl flex items-end justify-between">
               <p className="text-white text-sm truncate">{hero.guest_name}</p>
@@ -166,6 +169,9 @@ export function GalleryClient({
                     loading="lazy"
                     className="w-full h-full object-cover rounded-xl cursor-pointer"
                     onClick={() => setLightboxIndex(i + 1)}
+                    onError={(e) => {
+                      if (e.currentTarget.src !== photo.publicUrl) e.currentTarget.src = photo.publicUrl
+                    }}
                   />
                   <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-2 rounded-b-xl opacity-0 hover:opacity-100 transition flex items-end justify-between">
                     <p className="text-white text-xs truncate">{photo.guest_name}</p>
