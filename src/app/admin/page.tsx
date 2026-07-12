@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { requireAdmin } from '@/lib/auth'
 import { createServiceClient } from '@/lib/supabase/service'
-import { createEvent } from './actions'
+import { CreateEventForm } from './CreateEventForm'
 import { APP_VERSION } from '@/lib/version'
 import type { Event } from '@/lib/supabase/types'
 
@@ -34,20 +34,7 @@ export default async function AdminPage() {
         </form>
       </div>
 
-      <form action={createEvent} className="flex gap-2 mb-8">
-        <input
-          name="name"
-          placeholder="Event name, e.g. Mike's Birthday"
-          required
-          className="flex-1 px-4 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:outline-none focus:border-indigo-500"
-        />
-        <button
-          type="submit"
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition"
-        >
-          + Create Event
-        </button>
-      </form>
+      <CreateEventForm />
 
       {error && (
         <p className="text-red-400 bg-red-950/50 border border-red-900 rounded-lg px-4 py-3 mb-6">
