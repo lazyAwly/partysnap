@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { requireAdmin } from '@/lib/auth'
 import { createServiceClient } from '@/lib/supabase/service'
 import { createEvent } from './actions'
+import { APP_VERSION } from '@/lib/version'
 import type { Event } from '@/lib/supabase/types'
 
 type EventWithCount = Event & { uploads: { count: number }[] }
@@ -76,6 +77,8 @@ export default async function AdminPage() {
           <p className="text-gray-500 text-center py-8">No events yet. Create one above.</p>
         )}
       </div>
+
+      <p className="text-xs text-gray-600 text-center mt-8">{APP_VERSION}</p>
     </main>
   )
 }

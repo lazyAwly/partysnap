@@ -6,6 +6,7 @@ import { toggleEventActive } from '../../actions'
 import { QRCode } from '@/components/QRCode'
 import { ShareLinkButton } from '@/components/ShareLinkButton'
 import { AdminPhotoGrid } from '@/components/AdminPhotoGrid'
+import { APP_VERSION } from '@/lib/version'
 import type { Upload } from '@/lib/supabase/types'
 
 export default async function AdminEventPage({
@@ -68,6 +69,8 @@ export default async function AdminEventPage({
       <div className="bg-gray-900 rounded-2xl p-6">
         <AdminPhotoGrid eventId={event.id} photos={photos} />
       </div>
+
+      <p className="text-xs text-gray-600 text-center mt-8">{APP_VERSION}</p>
     </main>
   )
 }
