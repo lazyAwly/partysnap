@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { APP_VERSION } from '@/lib/version'
 
 export default function AdminLoginPage() {
   const [password, setPassword] = useState('')
@@ -49,6 +50,7 @@ export default function AdminLoginPage() {
             {loading ? 'Logging in…' : 'Log in'}
           </button>
         </form>
+        <p className="text-xs text-gray-600 text-center mt-6">{APP_VERSION}</p>
       </div>
     </main>
   )
