@@ -8,7 +8,7 @@ const MAX_SIZE = 10 * 1024 * 1024
 type UploadState =
   | { status: 'idle' }
   | { status: 'uploading'; total: number; done: number; failed: number }
-  | { status: 'done'; total: number; failed: number }
+  | { status: 'done'; total: number; failed: number; error?: string }
 
 export function UploadButton({
   eventId,
@@ -36,6 +36,7 @@ export function UploadButton({
 
     let done = 0
     let failed = skipped
+    let lastError: string | undefined
 
     setState({ status: 'uploading', total: valid.length, done, failed })
 
@@ -57,15 +58,17 @@ export function UploadButton({
         if (dbError) throw dbError
 
         done++
-      } catch {
+      } catch (err) {
         failed++
+        lastError = err instanceof Error ? err.message : String(err)
+        console.error('Photo upload failed', { fileName: file.name, error: err })
       }
       setState({ status: 'uploading', total: valid.length, done, failed })
     }
 
-    setState({ status: 'done', total: valid.length, failed })
+    setState({ status: 'done', total: valid.length, failed, error: lastError })
     if (inputRef.current) inputRef.current.value = ''
-    setTimeout(() => setState({ status: 'idle' }), 3000)
+    setTimeout(() => setState({ status: 'idle' }), lastError ? 8000 : 3000)
   }
 
   const label =
@@ -106,6 +109,9 @@ export function UploadButton({
             style={{ width: `${progress * 100}%` }}
           />
         </div>
+      )}
+      {state.status === 'done' && state.error && (
+        <p className="text-red-400 text-xs max-w-[220px] text-center">{state.error}</p>
       )}
     </div>
   )
