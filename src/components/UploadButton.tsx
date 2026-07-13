@@ -24,25 +24,20 @@ export function UploadButton({
     const files = Array.from(e.target.files ?? [])
     if (!files.length) return
 
-    const valid = files.filter((f) => f.size <= MAX_SIZE)
-    const skipped = files.length - valid.length
-
-    if (!valid.length) {
-      setState({ status: 'done', total: 0, failed: skipped })
-      if (inputRef.current) inputRef.current.value = ''
-      setTimeout(() => setState({ status: 'idle' }), 3000)
-      return
-    }
-
     let done = 0
-    let failed = skipped
+    let failed = 0
     let lastError: string | undefined
 
-    setState({ status: 'uploading', total: valid.length, done, failed })
+    setState({ status: 'uploading', total: files.length, done, failed })
 
-    for (const file of valid) {
+    for (const file of files) {
       try {
         const compressed = await compressImage(file)
+        if (compressed.size > MAX_SIZE) {
+          throw new Error(
+            `${file.name} is still too large after compression (${(compressed.size / 1024 / 1024).toFixed(1)}MB)`
+          )
+        }
         const id = crypto.randomUUID()
         const filePath = `${eventId}/${id}`
         const supabase = createClient()
@@ -63,10 +58,10 @@ export function UploadButton({
         lastError = err instanceof Error ? err.message : String(err)
         console.error('Photo upload failed', { fileName: file.name, error: err })
       }
-      setState({ status: 'uploading', total: valid.length, done, failed })
+      setState({ status: 'uploading', total: files.length, done, failed })
     }
 
-    setState({ status: 'done', total: valid.length, failed, error: lastError })
+    setState({ status: 'done', total: files.length, failed, error: lastError })
     if (inputRef.current) inputRef.current.value = ''
     setTimeout(() => setState({ status: 'idle' }), lastError ? 8000 : 3000)
   }
